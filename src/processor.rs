@@ -85,6 +85,7 @@ impl Processor {
         )?;
 
         msg!("Calling the token program to transfer token account ownership...");
+        msg!("PDA address: {}", pda.to_string());
         invoke(
             &owner_change_ix,
             &[
@@ -116,6 +117,7 @@ impl Processor {
         let pdas_temp_token_account = next_account_info(account_info_iter)?;
         let pdas_temp_token_account_info =
             TokenAccount::unpack(&pdas_temp_token_account.try_borrow_data()?)?;
+
         let (pda, nonce) = Pubkey::find_program_address(&[b"escrow"], program_id);
 
         if amount_expected_by_taker != pdas_temp_token_account_info.amount {
@@ -144,6 +146,7 @@ impl Processor {
 
         let token_program = next_account_info(account_info_iter)?;
 
+        //transfer Bob's Y Token to Alice.
         let transfer_to_initializer_ix = spl_token::instruction::transfer(
             token_program.key,
             takers_sending_token_account.key,
@@ -153,6 +156,7 @@ impl Processor {
             escrow_info.expected_amount,
         )?;
         msg!("Calling the token program to transfer tokens to the escrow's initializer...");
+        //Not need sign, because it is using signature extension.
         invoke(
             &transfer_to_initializer_ix,
             &[
@@ -165,6 +169,7 @@ impl Processor {
 
         let pda_account = next_account_info(account_info_iter)?;
 
+        //transfer Alice's temp token to Bob's X token account.
         let transfer_to_taker_ix = spl_token::instruction::transfer(
             token_program.key,
             pdas_temp_token_account.key,
